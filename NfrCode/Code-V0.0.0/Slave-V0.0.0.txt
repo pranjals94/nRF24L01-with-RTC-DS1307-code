@@ -1,0 +1,63 @@
+// keep both the modules at least 1 meter appart, 
+// placing them too close can cause transmission failures
+//Use capacitors closese to the power pins of NRF
+// Dont use max power (test in low) from arduino 3.3 volt as it damages the 3.3 volt regulator
+
+#include <SPI.h>
+#include <RF24.h>
+
+RF24 radio(9, 10);
+
+const byte address[6] = "NODE1";
+
+uint32_t receivedNumber;
+const byte LED_PIN = A4;
+
+void setup()
+{
+  Serial.begin(9600);
+  delay(500);
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+
+  if (!radio.begin())
+  {
+    Serial.println("NRF24 FAILED");
+    while (1);
+  }
+
+  //channel 100 is approx 2500 MHz.
+  // may try different channels/frequency to match the antena 
+  //frequency for maximum possible range 
+  radio.setChannel(100);
+
+  radio.setDataRate(RF24_250KBPS);
+  
+  // for PLA Antena transmission fails on high power start testing from Min Power
+  // RF24_PA_MAX, RF24_PA_HIGH, RF24_PA_LOW, RF24_PA_MIN
+  radio.setPALevel(RF24_PA_MAX);
+
+  radio.setAutoAck(true);
+  radio.openReadingPipe(1, address);
+  radio.startListening();
+
+  Serial.println("SLAVE READY");
+}
+
+void loop()
+{
+  if (radio.available())
+  {
+    // radio.available becomes true sometimes but received shows 0, check it
+    radio.read(&receivedNumber, sizeof(receivedNumber));
+    // Blink LED for 50 ms
+    digitalWrite(LED_PIN, HIGH);
+    delay(50);
+    digitalWrite(LED_PIN, LOW);
+
+    Serial.print("Received: ");
+    Serial.println(receivedNumber);
+  }else{
+    digitalWrite(LED_PIN, LOW);
+  }
+}

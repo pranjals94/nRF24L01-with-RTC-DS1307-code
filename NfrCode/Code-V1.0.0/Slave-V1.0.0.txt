@@ -1,0 +1,91 @@
+// keep both the modules at least 1 meter appart, 
+// placing them too close can cause transmission failures
+//Use capacitors closese to the power pins of NRF
+// Dont use max power (test in low) from arduino 3.3 volt as it damages the 3.3 volt regulator
+// the nfr module was failing when power wa supplied from modile charger, try good quality mobile chargers
+// working flawlessly from laptop usb and battery power
+
+#include <SPI.h>
+#include <RF24.h>
+
+RF24 radio(9, 10);
+
+const byte address[6] = "NODE1";
+
+const byte LED_PIN = A4;
+
+char receivedMessage[32];
+
+void setup()
+{
+  Serial.begin(9600);
+  delay(500);
+
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+
+  if (!radio.begin())
+  {
+    Serial.println("NRF24 FAILED");
+
+    while (1)
+    {
+      digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+      delay(200);
+    }
+  }
+
+  // Channel
+  radio.setChannel(100);
+
+  // Data rate
+  radio.setDataRate(RF24_250KBPS);
+
+  // Start with low power while testing
+  radio.setPALevel(RF24_PA_MIN);
+
+  // Auto acknowledgement
+  radio.setAutoAck(true);
+
+  // Same address as transmitter
+  radio.openReadingPipe(1, address);
+
+  // Start receiving
+  radio.startListening();
+
+  Serial.println("SLAVE READY");
+}
+struct SensorData
+{
+    uint16_t temperature;
+    uint16_t voltage;
+    uint16_t current;
+    uint16_t light;
+};
+
+SensorData data;
+
+void loop()
+{
+    if (radio.available())
+    {
+        radio.read(&data, sizeof(data));
+        digitalWrite(LED_PIN, HIGH);
+        delay(50);
+        digitalWrite(LED_PIN, LOW);
+
+        Serial.println(" ");
+        Serial.print("Temperature: ");
+        Serial.println(data.temperature);
+
+        Serial.print("Voltage: ");
+        Serial.println(data.voltage);
+
+        Serial.print("Current: ");
+        Serial.println(data.current);
+
+        Serial.print("Light: ");
+        Serial.println(data.light);
+        Serial.print("---------------------------------------");
+    }
+}

@@ -1,0 +1,10 @@
+nRF24L01	Arduino Uno/Nano
+
+VCC	3.3V
+GND	GND
+CE	D9
+CSN(CS)	D10
+SCK	D13
+MOSI	D11
+MISO	D12
+IRQ	Not connected

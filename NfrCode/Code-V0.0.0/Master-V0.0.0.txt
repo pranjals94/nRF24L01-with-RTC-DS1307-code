@@ -1,0 +1,84 @@
+// keep both the modules at least 1 meter appart, 
+// placing them too close can cause transmission failures
+//Use capacitors closese to the power pins of NRF
+// Dont use max power (test in low) from arduino 3.3 volt as it damages the 3.3 volt regulator
+// the nfr module was failing when power wa supplied from modile charger, try good quality mobile chargers
+// working flawlessly from laptop usb and battery power
+
+#include <SPI.h>
+#include <RF24.h>
+
+RF24 radio(9, 10);
+
+const byte address[6] = "NODE1";
+
+uint32_t counter = 0;
+
+const byte LED_PIN = A4;
+
+void setup()
+{
+  Serial.begin(9600);
+  delay(500);
+
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+
+  if (!radio.begin())
+  {
+    Serial.println("NRF24 FAILED");
+    
+    while (1)
+    {
+      digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+      delay(200);
+    }
+  }
+
+  //channel 100 is approx 2500 MHz.
+  // may try different channels/frequency to match the antena 
+  //frequency for maximum possible range 
+  radio.setChannel(100);
+  radio.setDataRate(RF24_250KBPS);
+
+  // for PLA Antena transmission fails on high power start testing from Min Power
+  // RF24_PA_MAX, RF24_PA_HIGH, RF24_PA_LOW, RF24_PA_MIN
+  radio.setPALevel(RF24_PA_MAX); 
+
+  radio.setAutoAck(true);
+  radio.setRetries(15, 15);
+
+  radio.openWritingPipe(address);
+  radio.stopListening();
+
+  Serial.println("MASTER READY");
+}
+
+void loop()
+{
+
+  // Check local nRF24 before transmitting
+  if (!radio.isChipConnected())
+  {
+    Serial.println("NRF24 NOT RESPONDING!");
+
+    // Don't transmit
+    delay(100);
+    return;
+  }
+
+  Serial.print("Sending: ");
+  Serial.print(counter);
+
+  if (radio.write(&counter, sizeof(counter)))
+  {
+    counter++;
+    Serial.println(" SUCCESS");
+  }
+  else
+  {
+    Serial.println(" FAILED");
+  }
+
+  delay(100);
+}

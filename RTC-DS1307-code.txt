@@ -1,0 +1,66 @@
+#include <Wire.h>
+#include <RTClib.h>
+
+RTC_DS1307 rtc;
+// scl A5 , sda A4
+void setup()
+{
+  Serial.begin(9600);
+  Wire.begin();
+ //delay(500);
+
+  if (!rtc.begin())
+  {
+    Serial.println("RTC NOT FOUND");
+    while (1);
+  }
+
+  Serial.println("RTC FOUND");
+
+  // // Set the RTC
+  rtc.adjust(DateTime(2026, 10, 3, 1, 10, 0));
+
+  // Serial.println("RTC TIME SET");
+}
+
+void loop()
+{
+  DateTime now = rtc.now();
+
+  // Date
+  if (now.day() < 10)
+    Serial.print("0");
+
+  Serial.print(now.day());
+  Serial.print("/");
+
+  if (now.month() < 10)
+    Serial.print("0");
+
+  Serial.print(now.month());
+  Serial.print("/");
+
+  Serial.print(now.year());
+
+  Serial.print(" ");
+
+  // Time
+  if (now.hour() < 10)
+    Serial.print("0");
+
+  Serial.print(now.hour());
+  Serial.print(":");
+
+  if (now.minute() < 10)
+    Serial.print("0");
+
+  Serial.print(now.minute());
+  Serial.print(":");
+
+  if (now.second() < 10)
+    Serial.print("0");
+
+  Serial.println(now.second());
+
+  delay(1000);
+}
